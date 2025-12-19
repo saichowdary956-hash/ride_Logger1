@@ -228,6 +228,13 @@
             border: 1px solid #bee5eb;
         }
 
+        .alert.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffc107;
+            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+        }
+
         @media (max-width: 768px) {
             h1 {
                 font-size: 1.8em;
@@ -316,6 +323,7 @@
         let activeConditions = {}; // Track active condition per category
         let startTimes = {}; // Track start time per category
         let timerInterval = null;
+        let twentyMinNotified = false; // Track if 20-min notification was shown
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
@@ -449,6 +457,82 @@
                 if (timeElement) {
                     timeElement.textContent = formatTime(totalTime);
                 }
+            
+            // Check for 20-minute notification
+            checkSessionTimeNotification();
+        }
+
+        function checkSessionTimeNotification() {
+            // Calculate total session time
+            let totalSeconds = 0;
+            
+            // Add all saved times
+            Object.keys(categories).forEach(category => {
+                categories[category].forEach(condition => {
+                    const key = `${category}|${condition}`;
+                    totalSeconds += conditionData[key].time;
+                });
+            });
+            
+            // Add current active recordings
+            Object.keys(activeConditions).forEach(category => {
+                const elapsed = Math.floor((Date.now() - startTimes[category]) / 1000);
+                totalSeconds += elapsed;
+            });
+            
+            const totalMinutes = totalSeconds / 60;
+            
+            // Show notification at 20 minutes
+            if (totalMinutes >= 20 && !twentyMinNotified) {
+                twentyMinNotified = true;
+                showTimeAlert('⏰ 20 Minutes Reached!', 'warning');
+                playNotificationSound();
+            }
+        }
+
+        function playNotificationSound() {
+            // Create a beep sound
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.5);
+        }
+
+        function showTimeAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.textContent = message;
+            alert.className = `alert ${type}`;
+            alert.style.display = 'block';
+            alert.style.position = 'fixed';
+            alert.style.top = '20px';
+            alert.style.left = '50%';
+            alert.style.transform = 'translateX(-50%)';
+            alert.style.zIndex = '9999';
+            alert.style.fontSize = '18px';
+            alert.style.fontWeight = 'bold';
+            alert.style.animation = 'pulse 1s infinite';
+            
+            // Keep it visible until user dismisses or clicks anywhere
+            setTimeout(() => {
+                alert.onclick = () => {
+                    alert.style.display = 'none';
+                    alert.style.position = 'static';
+                    alert.style.transform = 'none';
+                    alert.style.animation = 'none';
+                    alert.onclick = null;
+                };
+            }, 100);
             });
         }
 
