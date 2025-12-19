@@ -353,9 +353,8 @@
         };
 
         let conditionData = {};
-        let activeCondition = null;
-        let activeCategory = null;
-        let startTime = null;
+        let activeConditions = {}; // Track active condition per category
+        let startTimes = {}; // Track start time per category
         let timerInterval = null;
 
         // Initialize all conditions
@@ -404,7 +403,7 @@
                     const key = `${category}|${condition}`;
                     const data = conditionData[key];
                     const timeStr = formatTime(data.time);
-                    const isActive = activeCategory === category && activeCondition === condition;
+                    const isActive = activeConditions[category] === condition;
                     
                     const row = document.createElement('tr');
                     row.innerHTML = `
@@ -429,70 +428,83 @@
         }
 
         function toggleCondition(category, condition) {
-            const isCurrentActive = activeCategory === category && activeCondition === condition;
+            const isCurrentActive = activeConditions[category] === condition;
             
             if (isCurrentActive) {
-                stopRecording();
+                stopRecording(category);
             } else {
-                if (activeCondition) {
-                    stopRecording();
+                // Stop any other condition in this category
+                if (activeConditions[category]) {
+                    stopRecording(category);
                 }
                 startRecording(category, condition);
             }
         }
 
         function startRecording(category, condition) {
-            activeCategory = category;
-            activeCondition = condition;
-            startTime = Date.now();
+            activeConditions[category] = condition;
+            startTimes[category] = Date.now();
             
             const key = `${category}|${condition}`;
             conditionData[key].status = 'Recording';
             
-            timerInterval = setInterval(updateTimer, 1000);
+            if (!timerInterval) {
+                timerInterval = setInterval(updateTimer, 1000);
+            }
             renderConditions();
         }
 
-        function stopRecording() {
-            if (!activeCondition) return;
+        function stopRecording(category) {
+            const condition = activeConditions[category];
+            if (!condition) return;
             
-            clearInterval(timerInterval);
-            const key = `${activeCategory}|${activeCondition}`;
-            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const key = `${category}|${condition}`;
+            const elapsed = Math.floor((Date.now() - startTimes[category]) / 1000);
             conditionData[key].time += elapsed;
             conditionData[key].status = 'Stopped';
             
-            activeCategory = null;
-            activeCondition = null;
-            startTime = null;
+            delete activeConditions[category];
+            delete startTimes[category];
+            
+            // Stop timer if no active conditions
+            if (Object.keys(activeConditions).length === 0) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
             
             renderConditions();
             saveData();
         }
 
         function updateTimer() {
-            if (!activeCondition) return;
-            
-            const key = `${activeCategory}|${activeCondition}`;
-            const elapsed = Math.floor((Date.now() - startTime) / 1000);
-            const totalTime = conditionData[key].time + elapsed;
-            
-            document.getElementById(`time-${activeCategory}-${activeCondition}`).textContent = formatTime(totalTime);
-        }
-
-        function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60);
-            const secs = seconds % 60;
-            return `${mins}m ${secs}s`;
-        }
-
-        function resetCategory(category) {
-            if (activeCategory === category) {
-                stopRecording();
+            Object.keys(activeConditions).forEach(category => {
+                const condition = activeConditions[category];
+                const key = `${category}|${condition}`;
+                const elapsed = Math.floor((Date.now() - startTimes[category]) / 1000);
+                const totalTime = conditionData[key].time + elapsed;
+                
+                const timeElement = document.getElementById(`time-${category}-${condition}`);
+                if (timeElement) {
+                    timeElement.textContent = formatTime(totalTime);
+                }onditions[category]) {
+                stopRecording(category);
             }
             
             categories[category].forEach(condition => {
                 const key = `${category}|${condition}`;
+                conditionData[key].time = 0;
+                conditionData[key].status = 'Stopped';
+            });
+            
+            renderConditions();
+            saveData();
+            showAlert(`${category} reset successfully`, 'success');
+        }
+
+        function stopAll() {
+            Object.keys(activeConditions).forEach(category => {
+                stopRecording(category);
+            }= `${category}|${condition}`;
                 conditionData[key].time = 0;
                 conditionData[key].status = 'Stopped';
             });
