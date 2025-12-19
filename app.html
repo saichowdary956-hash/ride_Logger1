@@ -2,25 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="DataLogger">
-    <meta name="theme-color" content="#667eea">
-    <meta name="description" content="Record driving conditions including weather, road type, lighting, traffic, and speed data">
-    
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.json">
-    
-    <!-- iOS Icons -->
-    <link rel="apple-touch-icon" href="icon.svg">
-    <link rel="apple-touch-icon" sizes="152x152" href="icon.svg">
-    <link rel="apple-touch-icon" sizes="180x180" href="icon.svg">
-    <link rel="apple-touch-icon" sizes="167x167" href="icon.svg">
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="icon.svg">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DataLogger</title>
     <style>
         * {
@@ -51,204 +33,199 @@
 
         .card {
             background: white;
-            border-radius: 12px;
+            border-radius: 15px;
             padding: 25px;
             margin-bottom: 20px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
 
-        .card h2 {
-            color: #333;
-            margin-bottom: 20px;
-            border-bottom: 3px solid #667eea;
-            padding-bottom: 10px;
-        }
-
-        .form-grid {
+        .session-details {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 15px;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
 
-        .form-group {
+        .input-group {
             display: flex;
             flex-direction: column;
         }
 
-        label {
+        .input-group label {
             font-weight: 600;
-            color: #555;
             margin-bottom: 5px;
-            font-size: 14px;
+            color: #333;
         }
 
-        input[type="text"],
-        input[type="date"],
-        textarea {
+        .input-group input {
             padding: 10px;
             border: 2px solid #ddd;
-            border-radius: 6px;
+            border-radius: 8px;
             font-size: 14px;
             transition: border-color 0.3s;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        input[type="text"]:focus,
-        input[type="date"]:focus,
-        textarea:focus {
+        .input-group input:focus {
             outline: none;
             border-color: #667eea;
         }
 
-        textarea {
-            resize: vertical;
-            min-height: 80px;
+        .category-section {
+            margin-bottom: 25px;
+        }
+
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .category-header h3 {
+            color: #667eea;
+            font-size: 1.3em;
+        }
+
+        .reset-btn {
+            background: #ff9800;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .reset-btn:hover {
+            background: #f57c00;
+            transform: translateY(-2px);
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
         }
 
         th {
-            background: #667eea;
-            color: white;
+            background: #f5f5f5;
             padding: 12px;
             text-align: left;
             font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #ddd;
         }
 
         td {
-            padding: 10px 12px;
+            padding: 12px;
             border-bottom: 1px solid #eee;
-        }
-
-        tr:hover {
-            background: #f5f7fa;
-        }
-
-        .status-active {
-            color: #48bb78;
-            font-weight: 600;
-        }
-
-        .status-stopped {
-            color: #a0aec0;
         }
 
         .btn-start {
             background: #667eea;
             color: white;
-            padding: 6px 16px;
             border: none;
-            border-radius: 4px;
+            padding: 6px 14px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 13px;
             font-weight: 600;
+            margin-right: 10px;
             transition: all 0.3s;
-            margin-right: 8px;
         }
 
         .btn-start:hover {
             background: #5568d3;
-            transform: translateY(-1px);
+            transform: translateY(-2px);
         }
 
         .btn-start.active {
-            background: #f56565;
+            background: #f44336;
+            animation: pulse 2s infinite;
         }
 
-        .btn-start.active:hover {
-            background: #e53e3e;
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
         }
 
-        button {
-            padding: 12px 24px;
+        .status-active {
+            color: #f44336;
+            font-weight: bold;
+        }
+
+        .status-stopped {
+            color: #666;
+        }
+
+        .comments-box {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+        }
+
+        .comments-box:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .action-btn {
+            padding: 15px;
             border: none;
-            border-radius: 6px;
+            border-radius: 10px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
-        }
-
-        .btn-reset {
-            background: #ed8936;
-            color: white;
-            margin: 5px;
-        }
-
-        .btn-reset:hover {
-            background: #dd6b20;
-            transform: translateY(-2px);
-        }
-
-        .btn-stop {
-            background: #f56565;
             color: white;
         }
 
-        .btn-stop:hover {
-            background: #e53e3e;
-            transform: translateY(-2px);
+        .btn-stop-all {
+            background: #f44336;
+        }
+
+        .btn-stop-all:hover {
+            background: #d32f2f;
         }
 
         .btn-export {
-            background: #48bb78;
-            color: white;
+            background: #4caf50;
         }
 
         .btn-export:hover {
-            background: #38a169;
-            transform: translateY(-2px);
-        }
-
-        .control-section {
-            margin-top: 20px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            align-items: center;
+            background: #388e3c;
         }
 
         .alert {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 25px;
-            background: white;
+            padding: 12px;
+            margin: 10px 0;
             border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            transform: translateX(400px);
-            transition: transform 0.3s;
-            z-index: 1000;
-        }
-
-        .alert.show {
-            transform: translateX(0);
+            display: none;
         }
 
         .alert.success {
-            border-left: 5px solid #48bb78;
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
         }
 
         .alert.info {
-            border-left: 5px solid #4299e1;
-        }
-
-        .category-section {
-            margin-bottom: 30px;
-        }
-
-        .category-title {
-            color: #667eea;
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 10px;
-            padding: 8px 0;
-            border-bottom: 2px solid #e2e8f0;
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
         }
 
         @media (max-width: 768px) {
@@ -256,22 +233,16 @@
                 font-size: 1.8em;
             }
             
-            .form-grid {
+            .session-details {
                 grid-template-columns: 1fr;
             }
             
             table {
-                font-size: 12px;
+                font-size: 14px;
             }
             
             th, td {
                 padding: 8px;
-            }
-            
-            .btn-start {
-                padding: 4px 12px;
-                font-size: 11px;
-                margin-bottom: 4px;
             }
         }
     </style>
@@ -279,67 +250,56 @@
 <body>
     <div class="container">
         <h1>🚗 DataLogger</h1>
-        
+
         <div class="alert" id="alert"></div>
 
         <!-- Session Details -->
         <div class="card">
-            <h2>Session Details</h2>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label for="driver">Driver</label>
+            <h2 style="margin-bottom: 20px; color: #333;">Session Details</h2>
+            <div class="session-details">
+                <div class="input-group">
+                    <label>Driver:</label>
                     <input type="text" id="driver" placeholder="Enter driver name">
                 </div>
-                <div class="form-group">
-                    <label for="annotator">Annotator</label>
+                <div class="input-group">
+                    <label>Annotator:</label>
                     <input type="text" id="annotator" placeholder="Enter annotator name">
                 </div>
-                <div class="form-group">
-                    <label for="date">Date</label>
+                <div class="input-group">
+                    <label>Date:</label>
                     <input type="date" id="date">
                 </div>
-                <div class="form-group">
-                    <label for="vehicle">Vehicle</label>
+                <div class="input-group">
+                    <label>Vehicle:</label>
                     <input type="text" id="vehicle" placeholder="Enter vehicle">
                 </div>
-                <div class="form-group">
-                    <label for="rsuNo">RSU No</label>
+                <div class="input-group">
+                    <label>RSU No:</label>
                     <input type="text" id="rsuNo" placeholder="Enter RSU number">
                 </div>
-                <div class="form-group">
-                    <label for="driveId">Drive ID</label>
+                <div class="input-group">
+                    <label>Drive ID:</label>
                     <input type="text" id="driveId" placeholder="Enter drive ID">
                 </div>
             </div>
         </div>
 
-        <!-- Conditions Table -->
+        <!-- Recording Conditions -->
         <div class="card">
-            <h2>Recording Conditions</h2>
-            
-            <div id="conditionsContainer"></div>
+            <h2 style="margin-bottom: 20px; color: #333;">Recording Conditions</h2>
+            <div id="conditions-container"></div>
         </div>
 
         <!-- Comments -->
         <div class="card">
-            <h2>Comments</h2>
-            <textarea id="comments" placeholder="Enter comments here..."></textarea>
+            <h3 style="margin-bottom: 15px; color: #333;">Comments</h3>
+            <textarea class="comments-box" id="comments" placeholder="Enter comments here..."></textarea>
         </div>
 
-        <!-- Controls -->
-        <div class="card">
-            <h2>Controls</h2>
-            <div class="control-section">
-                <button class="btn-reset" onclick="resetCategory('Weather')">Reset Weather</button>
-                <button class="btn-reset" onclick="resetCategory('Roadtype')">Reset Road Type</button>
-                <button class="btn-reset" onclick="resetCategory('Lighting')">Reset Lighting</button>
-                <button class="btn-reset" onclick="resetCategory('Traffic')">Reset Traffic</button>
-                <button class="btn-reset" onclick="resetCategory('Speed')">Reset Speed</button>
-                <button class="btn-stop" onclick="stopAll()">Stop All</button>
-            </div>
-            <div class="control-section">
-                <button class="btn-export" onclick="exportCSV()">📥 Export CSV</button>
-            </div>
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button class="action-btn btn-stop-all" onclick="stopAll()">⏹️ Stop All</button>
+            <button class="action-btn btn-export" onclick="exportCSV()">📥 Export CSV</button>
         </div>
     </div>
 
@@ -357,45 +317,47 @@
         let startTimes = {}; // Track start time per category
         let timerInterval = null;
 
-        // Initialize all conditions
-        Object.keys(categories).forEach(category => {
-            categories[category].forEach(condition => {
-                const key = `${category}|${condition}`;
-                conditionData[key] = { time: 0, status: 'Stopped' };
-            });
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeData();
+            renderConditions();
+            loadData();
+            document.getElementById('date').valueAsDate = new Date();
         });
 
-        // Initialize
-        document.getElementById('date').valueAsDate = new Date();
-        renderConditions();
-        loadData();
+        function initializeData() {
+            Object.keys(categories).forEach(category => {
+                categories[category].forEach(condition => {
+                    const key = `${category}|${condition}`;
+                    conditionData[key] = { time: 0, status: 'Stopped' };
+                });
+            });
+        }
 
         function renderConditions() {
-            const container = document.getElementById('conditionsContainer');
+            const container = document.getElementById('conditions-container');
             container.innerHTML = '';
 
             Object.keys(categories).forEach(category => {
                 const section = document.createElement('div');
                 section.className = 'category-section';
-                
-                const title = document.createElement('div');
-                title.className = 'category-title';
-                title.textContent = category;
-                section.appendChild(title);
-
-                const table = document.createElement('table');
-                table.innerHTML = `
-                    <thead>
-                        <tr>
-                            <th>Category</th>
-                            <th>Condition</th>
-                            <th>Time</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tbody-${category}"></tbody>
+                section.innerHTML = `
+                    <div class="category-header">
+                        <h3>${category}</h3>
+                        <button class="reset-btn" onclick="resetCategory('${category}')">🔄 Reset ${category}</button>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Condition</th>
+                                <th>Time</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-${category}"></tbody>
+                    </table>
                 `;
-                section.appendChild(table);
                 container.appendChild(section);
 
                 const tbody = document.getElementById(`tbody-${category}`);
@@ -486,7 +448,18 @@
                 const timeElement = document.getElementById(`time-${category}-${condition}`);
                 if (timeElement) {
                     timeElement.textContent = formatTime(totalTime);
-                }onditions[category]) {
+                }
+            });
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}m ${secs}s`;
+        }
+
+        function resetCategory(category) {
+            if (activeConditions[category]) {
                 stopRecording(category);
             }
             
@@ -504,18 +477,7 @@
         function stopAll() {
             Object.keys(activeConditions).forEach(category => {
                 stopRecording(category);
-            }= `${category}|${condition}`;
-                conditionData[key].time = 0;
-                conditionData[key].status = 'Stopped';
             });
-            
-            renderConditions();
-            saveData();
-            showAlert(`${category} reset successfully`, 'success');
-        }
-
-        function stopAll() {
-            stopRecording();
             showAlert('All recording stopped', 'info');
         }
 
@@ -565,11 +527,14 @@
             document.body.removeChild(link);
         }
 
-        function showAlert(message, type = 'info') {
+        function showAlert(message, type) {
             const alert = document.getElementById('alert');
             alert.textContent = message;
-            alert.className = `alert show ${type}`;
-            setTimeout(() => alert.classList.remove('show'), 3000);
+            alert.className = `alert ${type}`;
+            alert.style.display = 'block';
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 3000);
         }
 
         function saveData() {
@@ -600,8 +565,8 @@
                 
                 if (data.conditionData) {
                     conditionData = data.conditionData;
+                    renderConditions();
                 }
-                renderConditions();
             }
         }
 
@@ -610,29 +575,6 @@
             document.getElementById(id).addEventListener('change', saveData);
         });
         document.getElementById('comments').addEventListener('input', saveData);
-
-        // Register Service Worker for PWA
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./service-worker.js')
-                    .then(registration => {
-                        console.log('ServiceWorker registered:', registration.scope);
-                    })
-                    .catch(error => {
-                        console.log('ServiceWorker registration failed:', error);
-                    });
-            });
-        }
-
-        // Show install prompt for PWA
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            // Show install button/banner if desired
-            console.log('PWA install prompt ready');
-        });
     </script>
 </body>
 </html>
-
