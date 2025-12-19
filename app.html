@@ -490,6 +490,24 @@
             const date = document.getElementById('date').value;
             const comments = document.getElementById('comments').value;
 
+            // Calculate overall session time (sum of all recorded times)
+            let totalSessionSeconds = 0;
+            Object.keys(categories).forEach(category => {
+                categories[category].forEach(condition => {
+                    const key = `${category}|${condition}`;
+                    totalSessionSeconds += conditionData[key].time;
+                });
+            });
+            
+            // Add current active recordings
+            Object.keys(activeConditions).forEach(category => {
+                const condition = activeConditions[category];
+                const elapsed = Math.floor((Date.now() - startTimes[category]) / 1000);
+                totalSessionSeconds += elapsed;
+            });
+
+            const totalSessionMinutes = (totalSessionSeconds / 60).toFixed(2);
+
             let csv = 'DataLogger Report\n';
             csv += `Driver,${driver}\n`;
             csv += `Annotator,${annotator}\n`;
@@ -497,6 +515,7 @@
             csv += `Vehicle,${vehicle}\n`;
             csv += `RSU No,${rsuNo}\n`;
             csv += `Drive ID,${driveId}\n`;
+            csv += `Overall Session Time,${formatTime(totalSessionSeconds)} (${totalSessionMinutes} minutes)\n`;
             csv += `Comments,"${comments.replace(/"/g, '""')}"\n\n`;
             
             csv += 'Category,Condition,Time (seconds),Time (minutes)\n';
@@ -504,7 +523,14 @@
             Object.keys(categories).forEach(category => {
                 categories[category].forEach(condition => {
                     const key = `${category}|${condition}`;
-                    const seconds = conditionData[key].time;
+                    let seconds = conditionData[key].time;
+                    
+                    // Add current elapsed time if this condition is active
+                    if (activeConditions[category] === condition) {
+                        const elapsed = Math.floor((Date.now() - startTimes[category]) / 1000);
+                        seconds += elapsed;
+                    }
+                    
                     const minutes = (seconds / 60).toFixed(2);
                     csv += `${category},${condition},${seconds},${minutes}\n`;
                 });
