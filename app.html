@@ -323,7 +323,7 @@
         let activeConditions = {}; // Track active condition per category
         let startTimes = {}; // Track start time per category
         let timerInterval = null;
-        let twentyMinNotified = false; // Track if 20-min notification was shown
+        let lastNotificationMinute = 0; // Track last notification time
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
@@ -480,13 +480,15 @@
                 totalSeconds += elapsed;
             });
             
-            const totalMinutes = totalSeconds / 60;
+            const totalMinutes = Math.floor(totalSeconds / 60);
             
-            // Show notification at 20 minutes
-            if (totalMinutes >= 20 && !twentyMinNotified) {
-                twentyMinNotified = true;
-                showTimeAlert('⏰ 20 Minutes Reached!', 'warning');
-                playNotificationSound();
+            // Show notification at 20 minutes, then every 30 minutes (50, 80, 110, etc.)
+            if (totalMinutes >= 20 && totalMinutes > lastNotificationMinute) {
+                if (totalMinutes === 20 || (totalMinutes >= 50 && (totalMinutes - 20) % 30 === 0)) {
+                    lastNotificationMinute = totalMinutes;
+                    showTimeAlert(`⏰ ${totalMinutes} Minutes Reached!`, 'warning');
+                    playNotificationSound();
+                }
             }
         }
 
