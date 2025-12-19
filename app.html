@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="DataLogger">
+    <meta name="theme-color" content="#667eea">
+    <meta name="description" content="Record driving conditions including weather, road type, lighting, traffic, and speed data">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- iOS Icons -->
+    <link rel="apple-touch-icon" href="icon.svg">
+    <link rel="apple-touch-icon" sizes="152x152" href="icon.svg">
+    <link rel="apple-touch-icon" sizes="180x180" href="icon.svg">
+    <link rel="apple-touch-icon" sizes="167x167" href="icon.svg">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    
+    <title>DataLogger</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="date"],
+        textarea {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        input[type="text"]:focus,
+        input[type="date"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        tr:hover {
+            background: #f5f7fa;
+        }
+
+        .status-active {
+            color: #48bb78;
+            font-weight: 600;
+        }
+
+        .status-stopped {
+            color: #a0aec0;
+        }
+
+        .btn-start {
+            background: #667eea;
+            color: white;
+            padding: 6px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-right: 8px;
+        }
+
+        .btn-start:hover {
+            background: #5568d3;
+            transform: translateY(-1px);
+        }
+
+        .btn-start.active {
+            background: #f56565;
+        }
+
+        .btn-start.active:hover {
+            background: #e53e3e;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-reset {
+            background: #ed8936;
+            color: white;
+            margin: 5px;
+        }
+
+        .btn-reset:hover {
+            background: #dd6b20;
+            transform: translateY(-2px);
+        }
+
+        .btn-stop {
+            background: #f56565;
+            color: white;
+        }
+
+        .btn-stop:hover {
+            background: #e53e3e;
+            transform: translateY(-2px);
+        }
+
+        .btn-export {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-export:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+        }
+
+        .control-section {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transform: translateX(400px);
+            transition: transform 0.3s;
+            z-index: 1000;
+        }
+
+        .alert.show {
+            transform: translateX(0);
+        }
+
+        .alert.success {
+            border-left: 5px solid #48bb78;
+        }
+
+        .alert.info {
+            border-left: 5px solid #4299e1;
+        }
+
+        .category-section {
+            margin-bottom: 30px;
+        }
+
+        .category-title {
+            color: #667eea;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            table {
+                font-size: 12px;
+            }
+            
+            th, td {
+                padding: 8px;
+            }
+            
+            .btn-start {
+                padding: 4px 12px;
+                font-size: 11px;
+                margin-bottom: 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚗 DataLogger</h1>
+        
+        <div class="alert" id="alert"></div>
+
+        <!-- Session Details -->
+        <div class="card">
+            <h2>Session Details</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="driver">Driver</label>
+                    <input type="text" id="driver" placeholder="Enter driver name">
+                </div>
+                <div class="form-group">
+                    <label for="annotator">Annotator</label>
+                    <input type="text" id="annotator" placeholder="Enter annotator name">
+                </div>
+                <div class="form-group">
+                    <label for="date">Date</label>
+                    <input type="date" id="date">
+                </div>
+                <div class="form-group">
+                    <label for="vehicle">Vehicle</label>
+                    <input type="text" id="vehicle" placeholder="Enter vehicle">
+                </div>
+                <div class="form-group">
+                    <label for="rsuNo">RSU No</label>
+                    <input type="text" id="rsuNo" placeholder="Enter RSU number">
+                </div>
+                <div class="form-group">
+                    <label for="driveId">Drive ID</label>
+                    <input type="text" id="driveId" placeholder="Enter drive ID">
+                </div>
+            </div>
+        </div>
+
+        <!-- Conditions Table -->
+        <div class="card">
+            <h2>Recording Conditions</h2>
+            
+            <div id="conditionsContainer"></div>
+        </div>
+
+        <!-- Comments -->
+        <div class="card">
+            <h2>Comments</h2>
+            <textarea id="comments" placeholder="Enter comments here..."></textarea>
+        </div>
+
+        <!-- Controls -->
+        <div class="card">
+            <h2>Controls</h2>
+            <div class="control-section">
+                <button class="btn-reset" onclick="resetCategory('Weather')">Reset Weather</button>
+                <button class="btn-reset" onclick="resetCategory('Roadtype')">Reset Road Type</button>
+                <button class="btn-reset" onclick="resetCategory('Lighting')">Reset Lighting</button>
+                <button class="btn-reset" onclick="resetCategory('Traffic')">Reset Traffic</button>
+                <button class="btn-reset" onclick="resetCategory('Speed')">Reset Speed</button>
+                <button class="btn-stop" onclick="stopAll()">Stop All</button>
+            </div>
+            <div class="control-section">
+                <button class="btn-export" onclick="exportCSV()">📥 Export CSV</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const categories = {
+            'Weather': ['Sunny', 'Low Sun', 'Cloudy', 'Rain', 'Snow', 'Fog'],
+            'Roadtype': ['City', 'Country', 'Highway', 'Construction site', 'Tunnel'],
+            'Lighting': ['Day', 'Dawn', 'Dusk', 'Lit Night', 'Dark Night'],
+            'Traffic': ['Flow', 'Jam'],
+            'Speed': ['0-2mph', '3-18mph', '19-37mph', '38-55mph', '56-80mph', '81-155mph']
+        };
+
+        let conditionData = {};
+        let activeCondition = null;
+        let activeCategory = null;
+        let startTime = null;
+        let timerInterval = null;
+
+        // Initialize all conditions
+        Object.keys(categories).forEach(category => {
+            categories[category].forEach(condition => {
+                const key = `${category}|${condition}`;
+                conditionData[key] = { time: 0, status: 'Stopped' };
+            });
+        });
+
+        // Initialize
+        document.getElementById('date').valueAsDate = new Date();
+        renderConditions();
+        loadData();
+
+        function renderConditions() {
+            const container = document.getElementById('conditionsContainer');
+            container.innerHTML = '';
+
+            Object.keys(categories).forEach(category => {
+                const section = document.createElement('div');
+                section.className = 'category-section';
+                
+                const title = document.createElement('div');
+                title.className = 'category-title';
+                title.textContent = category;
+                section.appendChild(title);
+
+                const table = document.createElement('table');
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Condition</th>
+                            <th>Time</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-${category}"></tbody>
+                `;
+                section.appendChild(table);
+                container.appendChild(section);
+
+                const tbody = document.getElementById(`tbody-${category}`);
+                categories[category].forEach((condition, index) => {
+                    const key = `${category}|${condition}`;
+                    const data = conditionData[key];
+                    const timeStr = formatTime(data.time);
+                    const isActive = activeCategory === category && activeCondition === condition;
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index === 0 ? category : ''}</td>
+                        <td>
+                            <button class="btn-start ${isActive ? 'active' : ''}" 
+                                    onclick="toggleCondition('${category}', '${condition}')" 
+                                    id="btn-${category}-${condition}">
+                                ${isActive ? 'Stop' : 'Start'}
+                            </button>
+                            ${condition}
+                        </td>
+                        <td id="time-${category}-${condition}">${timeStr}</td>
+                        <td class="${isActive ? 'status-active' : 'status-stopped'}" 
+                            id="status-${category}-${condition}">
+                            ${isActive ? '● Recording' : data.status}
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            });
+        }
+
+        function toggleCondition(category, condition) {
+            const isCurrentActive = activeCategory === category && activeCondition === condition;
+            
+            if (isCurrentActive) {
+                stopRecording();
+            } else {
+                if (activeCondition) {
+                    stopRecording();
+                }
+                startRecording(category, condition);
+            }
+        }
+
+        function startRecording(category, condition) {
+            activeCategory = category;
+            activeCondition = condition;
+            startTime = Date.now();
+            
+            const key = `${category}|${condition}`;
+            conditionData[key].status = 'Recording';
+            
+            timerInterval = setInterval(updateTimer, 1000);
+            renderConditions();
+        }
+
+        function stopRecording() {
+            if (!activeCondition) return;
+            
+            clearInterval(timerInterval);
+            const key = `${activeCategory}|${activeCondition}`;
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            conditionData[key].time += elapsed;
+            conditionData[key].status = 'Stopped';
+            
+            activeCategory = null;
+            activeCondition = null;
+            startTime = null;
+            
+            renderConditions();
+            saveData();
+        }
+
+        function updateTimer() {
+            if (!activeCondition) return;
+            
+            const key = `${activeCategory}|${activeCondition}`;
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const totalTime = conditionData[key].time + elapsed;
+            
+            document.getElementById(`time-${activeCategory}-${activeCondition}`).textContent = formatTime(totalTime);
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}m ${secs}s`;
+        }
+
+        function resetCategory(category) {
+            if (activeCategory === category) {
+                stopRecording();
+            }
+            
+            categories[category].forEach(condition => {
+                const key = `${category}|${condition}`;
+                conditionData[key].time = 0;
+                conditionData[key].status = 'Stopped';
+            });
+            
+            renderConditions();
+            saveData();
+            showAlert(`${category} reset successfully`, 'success');
+        }
+
+        function stopAll() {
+            stopRecording();
+            showAlert('All recording stopped', 'info');
+        }
+
+        function exportCSV() {
+            const driver = document.getElementById('driver').value;
+            const annotator = document.getElementById('annotator').value;
+            const vehicle = document.getElementById('vehicle').value;
+            const rsuNo = document.getElementById('rsuNo').value;
+            const driveId = document.getElementById('driveId').value;
+            const date = document.getElementById('date').value;
+            const comments = document.getElementById('comments').value;
+
+            let csv = 'DataLogger Report\n';
+            csv += `Driver,${driver}\n`;
+            csv += `Annotator,${annotator}\n`;
+            csv += `Date,${date}\n`;
+            csv += `Vehicle,${vehicle}\n`;
+            csv += `RSU No,${rsuNo}\n`;
+            csv += `Drive ID,${driveId}\n`;
+            csv += `Comments,"${comments.replace(/"/g, '""')}"\n\n`;
+            
+            csv += 'Category,Condition,Time (seconds),Time (minutes)\n';
+
+            Object.keys(categories).forEach(category => {
+                categories[category].forEach(condition => {
+                    const key = `${category}|${condition}`;
+                    const seconds = conditionData[key].time;
+                    const minutes = (seconds / 60).toFixed(2);
+                    csv += `${category},${condition},${seconds},${minutes}\n`;
+                });
+            });
+
+            const filename = `DataLogger_${date}_${Date.now()}.csv`;
+            downloadCSV(csv, filename);
+            showAlert('CSV exported successfully!', 'success');
+        }
+
+        function downloadCSV(csv, filename) {
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function showAlert(message, type = 'info') {
+            const alert = document.getElementById('alert');
+            alert.textContent = message;
+            alert.className = `alert show ${type}`;
+            setTimeout(() => alert.classList.remove('show'), 3000);
+        }
+
+        function saveData() {
+            const data = {
+                driver: document.getElementById('driver').value,
+                annotator: document.getElementById('annotator').value,
+                vehicle: document.getElementById('vehicle').value,
+                rsuNo: document.getElementById('rsuNo').value,
+                driveId: document.getElementById('driveId').value,
+                date: document.getElementById('date').value,
+                comments: document.getElementById('comments').value,
+                conditionData: conditionData
+            };
+            localStorage.setItem('dataLoggerData', JSON.stringify(data));
+        }
+
+        function loadData() {
+            const stored = localStorage.getItem('dataLoggerData');
+            if (stored) {
+                const data = JSON.parse(stored);
+                document.getElementById('driver').value = data.driver || '';
+                document.getElementById('annotator').value = data.annotator || '';
+                document.getElementById('vehicle').value = data.vehicle || '';
+                document.getElementById('rsuNo').value = data.rsuNo || '';
+                document.getElementById('driveId').value = data.driveId || '';
+                document.getElementById('date').value = data.date || new Date().toISOString().split('T')[0];
+                document.getElementById('comments').value = data.comments || '';
+                
+                if (data.conditionData) {
+                    conditionData = data.conditionData;
+                }
+                renderConditions();
+            }
+        }
+
+        // Auto-save on input change
+        ['driver', 'annotator', 'vehicle', 'rsuNo', 'driveId', 'date', 'comments'].forEach(id => {
+            document.getElementById(id).addEventListener('change', saveData);
+        });
+        document.getElementById('comments').addEventListener('input', saveData);
+
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registered:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('ServiceWorker registration failed:', error);
+                    });
+            });
+        }
+
+        // Show install prompt for PWA
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // Show install button/banner if desired
+            console.log('PWA install prompt ready');
+        });
+    </script>
+</body>
+</html>
+

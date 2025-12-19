@@ -1,0 +1,123 @@
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:async';
+
+void main() {
+runApp(const DataLoggerApp());
+}
+
+class DataLoggerApp extends StatelessWidget {
+const DataLoggerApp({super.key});
+
+@override
+Widget build(BuildContext context) {
+return MaterialApp(
+title: 'Perception Data Logger',
+home: const LoggerHome(),
+debugShowCheckedModeBanner: false,
+);
+}
+}
+
+class LoggerHome extends StatefulWidget {
+const LoggerHome({super.key});
+
+@override
+State<LoggerHome> createState() => _LoggerHomeState();
+}
+
+class _LoggerHomeState extends State<LoggerHome> {
+final List<String> categories = [
+"Data Collection",
+"Labeling",
+"Training",
+"Validation",
+"Debugging"
+];
+
+Timer? timer;
+String? activeCategory;
+int seconds = 0;
+
+@override
+void initState() {
+super.initState();
+loadTodayData();
+}
+
+String get todayKey {
+final now = DateTime.now();
+return "${now.year}-${now.month}-${now.day}";
+}
+
+Future<void> loadTodayData() async {
+SharedPreferences prefs = await SharedPreferences.getInstance();
+for (var c in categories) {
+prefs.getInt("$todayKey-$c") ?? 0;
+}
+setState(() {});
+}
+
+void startTimer(String category) {
+stopTimer();
+activeCategory = category;
+timer = Timer.periodic(const Duration(seconds: 1), (_) {
+setState(() => seconds++);
+});
+}
+
+Future<void> stopTimer() async {
+if (timer != null && activeCategory != null) {
+timer!.cancel();
+SharedPreferences prefs = await SharedPreferences.getInstance();
+int prev = prefs.getInt("$todayKey-$activeCategory") ?? 0;
+prefs.setInt("$todayKey-$activeCategory", prev + seconds);
+}
+timer = null;
+seconds = 0;
+activeCategory = null;
+setState(() {});
+}
+
+Future<int> getCategoryTime(String category) async {
+SharedPreferences prefs = await SharedPreferences.getInstance();
+return prefs.getInt("$todayKey-$category") ?? 0;
+}
+
+String formatTime(int s) {
+final h = s ~/ 3600;
+final m = (s % 3600) ~/ 60;
+final sec = s % 60;
+return "${h}h ${m}m ${sec}s";
+}
+
+@override
+Widget build(BuildContext context) {
+return Scaffold(
+appBar: AppBar(title: const Text("Front Camera Perception Logger")),
+body: ListView(
+padding: const EdgeInsets.all(12),
+children: categories.map((c) {
+return Card(
+child: ListTile(
+title: Text(c),
+subtitle: FutureBuilder<int>(
+future: getCategoryTime(c),
+builder: (_, snapshot) =>
+Text("Today: ${formatTime(snapshot.data ?? 0)}"),
+),
+trailing: ElevatedButton(
+onPressed: () => startTimer(c),
+child: const Text("Start"),
+),
+),
+);
+}).toList(),
+),
+floatingActionButton: FloatingActionButton(
+onPressed: stopTimer,
+child: const Icon(Icons.stop),
+),
+);
+}
+}

@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ride Data Logger</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; background: #f5f5f5; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 { color: #1976d2; margin-bottom: 20px; text-align: center; }
+        .card { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 20px; }
+        .card h2 { font-size: 18px; margin-bottom: 15px; color: #333; }
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-weight: 500; margin-bottom: 4px; color: #555; }
+        input, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; font-family: inherit; }
+        input:focus, textarea:focus { outline: none; border-color: #1976d2; box-shadow: 0 0 0 3px rgba(25,118,210,0.1); }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .condition-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+        .condition-card { border: 1px solid #ddd; border-radius: 4px; padding: 12px; background: #fafafa; }
+        .condition-card h3 { font-size: 14px; margin-bottom: 8px; }
+        .timer { font-size: 20px; font-weight: bold; color: #1976d2; margin: 8px 0; }
+        button { padding: 10px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.2s; }
+        .btn-primary { background: #1976d2; color: white; }
+        .btn-primary:hover { background: #1565c0; }
+        .btn-danger { background: #d32f2f; color: white; }
+        .btn-danger:hover { background: #c62828; }
+        .btn-success { background: #388e3c; color: white; }
+        .btn-success:hover { background: #2e7d32; }
+        .btn-warning { background: #f57c00; color: white; }
+        .btn-warning:hover { background: #e65100; }
+        .btn-secondary { background: #757575; color: white; }
+        .btn-secondary:hover { background: #616161; }
+        .btn-block { width: 100%; margin-bottom: 8px; }
+        .button-group { display: flex; gap: 8px; margin-top: 20px; }
+        .button-group button { flex: 1; }
+        .info-box { background: #e3f2fd; border-left: 4px solid #1976d2; padding: 12px; border-radius: 4px; font-size: 13px; color: #0d47a1; margin-top: 15px; }
+        .alert { padding: 12px; border-radius: 4px; margin-bottom: 12px; display: none; }
+        .alert.show { display: block; }
+        .alert.success { background: #c8e6c9; color: #2e7d32; }
+        .alert.info { background: #bbdefb; color: #1565c0; }
+        @media (max-width: 600px) {
+            .row { grid-template-columns: 1fr; }
+            .condition-list { grid-template-columns: 1fr; }
+            .button-group { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚗 Ride Data Logger Report</h1>
+
+        <div class="alert" id="alert"></div>
+
+        <!-- Session Details -->
+        <div class="card">
+            <h2>Session Details</h2>
+            <div class="row">
+                <div class="form-group">
+                    <label>Driver</label>
+                    <input type="text" id="driver" placeholder="Enter driver name">
+                </div>
+                <div class="form-group">
+                    <label>Annotator</label>
+                    <input type="text" id="annotator" placeholder="Enter annotator name">
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group">
+                    <label>Vehicle</label>
+                    <input type="text" id="vehicle" placeholder="Enter vehicle info">
+                </div>
+                <div class="form-group">
+                    <label>RSU No</label>
+                    <input type="text" id="rsuNo" placeholder="Enter RSU number">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Drive ID</label>
+                <input type="text" id="driveId" placeholder="Enter drive ID">
+            </div>
+            <div class="form-group">
+                <label>Date</label>
+                <input type="date" id="date">
+            </div>
+        </div>
+
+        <!-- Weather Conditions -->
+        <div class="card">
+            <h2>Weather Conditions</h2>
+            <div class="condition-list" id="conditionList"></div>
+        </div>
+
+        <!-- Control Buttons -->
+        <div class="card">
+            <div class="button-group">
+                <button class="btn-warning btn-block" onclick="stopAll()">⏹ STOP RECORDING</button>
+                <button class="btn-success btn-block" onclick="exportCSV()">📥 Export CSV</button>
+            </div>
+            <div class="info-box">
+                ✓ Click "Start" on any condition to begin timing<br>
+                ✓ Only one condition can be active at a time<br>
+                ✓ Click "Export CSV" to download your data
+            </div>
+        </div>
+
+        <!-- Sync Settings -->
+        <div class="card">
+            <h2>Sync Settings</h2>
+            <div class="form-group">
+                <label>Server URL (for real sync)</label>
+                <input type="text" id="serverUrl" placeholder="http://localhost:5000/upload" value="http://localhost:5000/upload">
+            </div>
+            <div class="form-group">
+                <label style="display: flex; align-items: center; cursor: pointer; font-weight: 400;">
+                    <input type="checkbox" id="useMockServer" checked style="width: auto; margin-right: 8px;">
+                    Use Mock Server (instant sync for testing)
+                </label>
+            </div>
+            <div class="button-group">
+                <button class="btn-primary btn-block" onclick="syncNow()">🔄 Sync Now</button>
+                <button class="btn-secondary btn-block" onclick="clearQueue()">🗑 Clear Queue</button>
+            </div>
+            <div id="syncStatus" style="margin-top: 12px; padding: 8px; background: #f0f0f0; border-radius: 4px; font-size: 12px;">
+                No sync performed yet
+            </div>
+        </div>
+
+        <!-- Sync Queue -->
+        <div class="card">
+            <h2>Sync Queue (<span id="queueCount">0</span> pending)</h2>
+            <div id="syncQueue" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 8px;">
+                <p style="color: #999; font-size: 12px;">No items in queue</p>
+            </div>
+        </div>
+
+        <!-- Sample Data -->
+        <div class="card">
+            <h2>Testing</h2>
+            <button class="btn-primary btn-block" onclick="addSampleData()">📊 Populate Sample Data</button>
+            <p style="font-size: 12px; color: #666; margin-top: 8px;">Adds test data to all weather conditions to demonstrate the app functionality.</p>
+        </div>
+    </div>
+
+    <script>
+        const categories = {
+            'Weather': ['Sunny', 'Low Sun', 'Cloudy', 'Rain', 'Snow', 'Fog'],
+            'Roadtype': ['City', 'Country', 'Highway', 'Construction site', 'Tunnel'],
+            'Lighting': ['Day', 'Dawn', 'Dusk', 'Lit Night', 'Dark Night'],
+            'Traffic': ['Flow', 'Jam'],
+            'Speed': ['0-2mph', '3-18mph', '19-37mph', '38-55mph', '56-80mph', '81-155mph']
+        };
+
+        let conditionData = {};
+        let activeCondition = null;
+        let activeCategory = null;
+        let startTime = null;
+        let timerInterval = null;
+
+        // Initialize all conditions
+        Object.keys(categories).forEach(category => {
+            categories[category].forEach(condition => {
+                const key = `${category}|${condition}`;
+                conditionData[key] = { time: 0, status: 'Stopped' };
+            });
+        });
+
+        // Initialize
+        document.getElementById('date').valueAsDate = new Date();
+        renderConditions();
+        loadData();
+
+        function renderConditions() {
+            const container = document.getElementById('conditionsContainer');
+            container.innerHTML = '';
+
+            Object.keys(categories).forEach(category => {
+                const section = document.createElement('div');
+                section.className = 'category-section';
+                
+                const title = document.createElement('div');
+                title.className = 'category-title';
+                title.textContent = category;
+                section.appendChild(title);
+
+                const table = document.createElement('table');
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Condition</th>
+                            <th>Time</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-${category}"></tbody>
+                `;
+                section.appendChild(table);
+                container.appendChild(section);
+
+                const tbody = document.getElementById(`tbody-${category}`);
+                categories[category].forEach((condition, index) => {
+                    const key = `${category}|${condition}`;
+                    const data = conditionData[key];
+                    const timeStr = formatTime(data.time);
+                    const isActive = activeCategory === category && activeCondition === condition;
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index === 0 ? category : ''}</td>
+                        <td>
+                            <button class="btn-start ${isActive ? 'active' : ''}" 
+                                    onclick="toggleCondition('${category}', '${condition}')" 
+                                    id="btn-${category}-${condition}">
+                                ${isActive ? 'Stop' : 'Start'}
+                            </button>
+                            ${condition}
+                        </td>
+                        <td id="time-${category}-${condition}">${timeStr}</td>
+                        <td class="${isActive ? 'status-active' : 'status-stopped'}" 
+                            id="status-${category}-${condition}">
+                            ${isActive ? '● Recording' : data.status}
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            });
+        }
+
+        function toggleCondition(category, condition) {
+            const isCurrentActive = activeCategory === category && activeCondition === condition;
+            
+            if (isCurrentActive) {
+                stopRecording();
+            } else {
+                if (activeCondition) {
+                    stopRecording();
+                }
+                startRecording(category, condition);
+            }
+        }
+
+        function startRecording(category, condition) {
+            activeCategory = category;
+            activeCondition = condition;
+            startTime = Date.now();
+            
+            const key = `${category}|${condition}`;
+            conditionData[key].status = 'Recording';
+            
+            timerInterval = setInterval(updateTimer, 1000);
+            renderConditions();
+        }
+
+        function stopRecording() {
+            if (!activeCondition) return;
+            
+            clearInterval(timerInterval);
+            const key = `${activeCategory}|${activeCondition}`;
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            conditionData[key].time += elapsed;
+            conditionData[key].status = 'Stopped';
+            
+            activeCategory = null;
+            activeCondition = null;
+            startTime = null;
+            
+            renderConditions();
+            saveData();
+        }
+
+        function updateTimer() {
+            if (!activeCondition) return;
+            
+            const key = `${activeCategory}|${activeCondition}`;
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const totalTime = conditionData[key].time + elapsed;
+            
+            document.getElementById(`time-${activeCategory}-${activeCondition}`).textContent = formatTime(totalTime);
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}m ${secs}s`;
+        }
+
+        function resetCategory(category) {
+            if (activeCategory === category) {
+                stopRecording();
+            }
+            
+            categories[category].forEach(condition => {
+                const key = `${category}|${condition}`;
+                conditionData[key].time = 0;
+                conditionData[key].status = 'Stopped';
+            });
+            
+            renderConditions();
+            saveData();
+            showAlert(`${category} reset successfully`, 'success');
+        }
+
+        function stopAll() {
+            stopRecording();
+            showAlert('All recording stopped', 'info');
+        }
+
+        function exportCSV() {
+            const driver = document.getElementById('driver').value;
+            const annotator = document.getElementById('annotator').value;
+            const vehicle = document.getElementById('vehicle').value;
+            const rsuNo = document.getElementById('rsuNo').value;
+            const driveId = document.getElementById('driveId').value;
+            const date = document.getElementById('date').value;
+            const comments = document.getElementById('comments').value;
+
+            let csv = 'DataLogger Report\n';
+            csv += `Driver,${driver}\n`;
+            csv += `Annotator,${annotator}\n`;
+            csv += `Date,${date}\n`;
+            csv += `Vehicle,${vehicle}\n`;
+            csv += `RSU No,${rsuNo}\n`;
+            csv += `Drive ID,${driveId}\n`;
+            csv += `Comments,${comments}\n\n`;
+            
+            csv += 'Category,Condition,Time (seconds),Time (minutes)\n';
+
+            Object.keys(categories).forEach(category => {
+                categories[category].forEach(condition => {
+                    const key = `${category}|${condition}`;
+                    const seconds = conditionData[key].time;
+                    const minutes = (seconds / 60).toFixed(2);
+                    csv += `${category},${condition},${seconds},${minutes}\n`;
+                });
+            });
+
+            const filename = `DataLogger_${date}_${Date.now()}.csv`;
+            downloadCSV(csv, filename);
+            showAlert('CSV exported successfully!', 'success');
+        }
+
+        function downloadCSV(csv, filename) {
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function showAlert(message, type = 'info') {
+            const alert = document.getElementById('alert');
+            alert.textContent = message;
+            alert.className = `alert show ${type}`;
+            setTimeout(() => alert.classList.remove('show'), 3000);
+        }
+
+        function saveData() {
+            const data = {
+                driver: document.getElementById('driver').value,
+                annotator: document.getElementById('annotator').value,
+                vehicle: document.getElementById('vehicle').value,
+                rsuNo: document.getElementById('rsuNo').value,
+                driveId: document.getElementById('driveId').value,
+                date: document.getElementById('date').value,
+                comments: document.getElementById('comments').value,
+                conditionData: conditionData
+            };
+            localStorage.setItem('dataLoggerData', JSON.stringify(data));
+        }
+
+        function loadData() {
+            const stored = localStorage.getItem('dataLoggerData');
+            if (stored) {
+                const data = JSON.parse(stored);
+                document.getElementById('driver').value = data.driver || '';
+                document.getElementById('annotator').value = data.annotator || '';
+                document.getElementById('vehicle').value = data.vehicle || '';
+                document.getElementById('rsuNo').value = data.rsuNo || '';
+                document.getElementById('driveId').value = data.driveId || '';
+                document.getElementById('date').value = data.date || new Date().toISOString().split('T')[0];
+                document.getElementById('comments').value = data.comments || '';
+                
+                if (data.conditionData) {
+                    conditionData = data.conditionData;
+                }
+                renderConditions();
+            }
+        }
+
+        // Auto-save on input change
+        ['driver', 'annotator', 'vehicle', 'rsuNo', 'driveId', 'date', 'comments'].forEach(id => {
+            document.getElementById(id).addEventListener('change', saveData);
+        });
+        document.getElementById('comments').addEventListener('input', saveData);
+    </script>
+</body>
+</html>
