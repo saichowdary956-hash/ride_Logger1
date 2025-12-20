@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚗 Ride Data Logger</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+
+        .session-fields {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .field-group label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+            font-size: 0.9rem;
+        }
+
+        .field-group input {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .field-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            z-index: 1000;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .notification.yellow {
+            background: #ffd700;
+            color: #000;
+        }
+
+        .notification.red {
+            background: #ff4444;
+            color: white;
+        }
+
+        @keyframes slideDown {
+            from {
+                top: -100px;
+                opacity: 0;
+            }
+            to {
+                top: 20px;
+                opacity: 1;
+            }
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .data-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .data-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .data-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .category-cell {
+            font-weight: 600;
+            color: #667eea;
+            vertical-align: top;
+            padding-top: 15px !important;
+        }
+
+        .condition-cell {
+            font-weight: 500;
+        }
+
+        .time-cell {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .status-cell button {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .start-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .stop-btn {
+            background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+            color: white;
+        }
+
+        .stop-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 68, 68, 0.4);
+        }
+
+        .active-row {
+            background: #fff3cd !important;
+            border-left: 4px solid #ff4444;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        .control-btn {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .reset-btn {
+            background: linear-gradient(135deg, #ffa500 0%, #ff8c00 100%);
+            color: white;
+        }
+
+        .reset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 165, 0, 0.4);
+        }
+
+        .stop-all-btn {
+            background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+            color: white;
+        }
+
+        .stop-all-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 68, 68, 0.4);
+        }
+
+        .export-btn {
+            background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+            color: white;
+        }
+
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .session-fields {
+                grid-template-columns: 1fr;
+            }
+
+            .data-table {
+                font-size: 0.9rem;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚗 Ride Data Logger</h1>
+
+        <div id="notification"></div>
+
+        <div class="session-fields">
+            <div class="field-group">
+                <label>Driver</label>
+                <input type="text" id="driver" placeholder="Driver">
+            </div>
+            <div class="field-group">
+                <label>Annotator</label>
+                <input type="text" id="annotator" placeholder="Annotator">
+            </div>
+            <div class="field-group">
+                <label>Date</label>
+                <input type="date" id="date">
+            </div>
+            <div class="field-group">
+                <label>Vehicle</label>
+                <input type="text" id="vehicle" placeholder="Vehicle">
+            </div>
+            <div class="field-group">
+                <label>RSU NO</label>
+                <input type="text" id="rsuNo" placeholder="RSU NO">
+            </div>
+            <div class="field-group">
+                <label>R S U Start Date</label>
+                <input type="date" id="rsuStartDate">
+            </div>
+            <div class="field-group">
+                <label>Drive Id</label>
+                <input type="text" id="driveId" placeholder="Drive Id">
+            </div>
+        </div>
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Condition</th>
+                    <th>Time</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="dataTable"></tbody>
+        </table>
+
+        <div class="controls">
+            <button class="control-btn reset-btn" onclick="resetCategory('Weather')">Reset Weather</button>
+            <button class="control-btn reset-btn" onclick="resetCategory('Road Type')">Reset Road Type</button>
+            <button class="control-btn reset-btn" onclick="resetCategory('Lighting')">Reset Lighting</button>
+            <button class="control-btn reset-btn" onclick="resetCategory('Traffic')">Reset Traffic</button>
+            <button class="control-btn reset-btn" onclick="resetCategory('Speed')">Reset Speed</button>
+            <button class="control-btn stop-all-btn" onclick="stopAll()">⏹ Stop All</button>
+            <button class="control-btn export-btn" onclick="exportCSV()">📁 Export CSV</button>
+        </div>
+    </div>
+
+    <script>
+        const categories = {
+            "Weather": ["Sunny", "Low Sun", "Cloudy", "Rain", "Fog", "Snow"],
+            "Road Type": ["City", "Country", "Highway", "Construction Site", "Tunnel"],
+            "Lighting": ["Day", "Dawn", "Lit Night", "Dark Night"],
+            "Traffic": ["Flow", "Jam"],
+            "Speed": ["0-2 mph", "3-18 mph", "19-37 mph", "38-55 mph", "56-80 mph", "81-155 mph"]
+        };
+
+        let conditionData = {};
+        let activeConditions = {};
+        let startTimes = {};
+        let sessionStartTime = null;
+        let notified30 = false;
+        let notified40 = false;
+        let updateInterval = null;
+
+        // Initialize data structure
+        function initData() {
+            Object.keys(categories).forEach(category => {
+                categories[category].forEach(condition => {
+                    const key = `${category}|${condition}`;
+                    conditionData[key] = { time: 0, status: 'idle' };
+                });
+            });
+            renderTable();
+            loadData();
+            setInterval(updateTimers, 1000);
+        }
+
+        // Render table
+        function renderTable() {
+            const tbody = document.getElementById('dataTable');
+            tbody.innerHTML = '';
+
+            Object.keys(categories).forEach((category, catIndex) => {
+                categories[category].forEach((condition, condIndex) => {
+                    const key = `${category}|${condition}`;
+                    const row = tbody.insertRow();
+                    const isActive = activeConditions[category] === condition;
+                    
+                    if (isActive) {
+                        row.classList.add('active-row');
+                    }
+
+                    if (condIndex === 0) {
+                        const catCell = row.insertCell(0);
+                        catCell.textContent = category;
+                        catCell.rowSpan = categories[category].length;
+                        catCell.classList.add('category-cell');
+                    }
+
+                    const condCell = row.insertCell(condIndex === 0 ? 1 : 0);
+                    condCell.textContent = condition;
+                    condCell.classList.add('condition-cell');
+
+                    const timeCell = row.insertCell(condIndex === 0 ? 2 : 1);
+                    timeCell.id = `time-${key}`;
+                    timeCell.classList.add('time-cell');
+                    timeCell.textContent = formatTime(conditionData[key].time);
+
+                    const statusCell = row.insertCell(condIndex === 0 ? 3 : 2);
+                    statusCell.classList.add('status-cell');
+                    
+                    const button = document.createElement('button');
+                    button.textContent = isActive ? 'Stop' : 'Start';
+                    button.className = isActive ? 'stop-btn' : 'start-btn';
+                    button.onclick = () => toggleCondition(category, condition);
+                    statusCell.appendChild(button);
+                });
+            });
+        }
+
+        function formatTime(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function toggleCondition(category, condition) {
+            const isActive = activeConditions[category] === condition;
+            
+            if (isActive) {
+                stopRecording(category);
+            } else {
+                if (activeConditions[category]) {
+                    stopRecording(category);
+                }
+                startRecording(category, condition);
+            }
+            
+            renderTable();
+            saveData();
+        }
+
+        function startRecording(category, condition) {
+            activeConditions[category] = condition;
+            startTimes[category] = Date.now();
+            
+            if (!sessionStartTime) {
+                sessionStartTime = Date.now();
+            }
+
+            const key = `${category}|${condition}`;
+            conditionData[key].status = 'active';
+        }
+
+        function stopRecording(category) {
+            const condition = activeConditions[category];
+            if (!condition) return;
+
+            const elapsed = Date.now() - startTimes[category];
+            const key = `${category}|${condition}`;
+            conditionData[key].time += elapsed;
+            conditionData[key].status = 'idle';
+
+            delete activeConditions[category];
+            delete startTimes[category];
+        }
+
+        function updateTimers() {
+            Object.keys(activeConditions).forEach(category => {
+                const condition = activeConditions[category];
+                const key = `${category}|${condition}`;
+                const elapsed = Date.now() - startTimes[category];
+                const total = conditionData[key].time + elapsed;
+                
+                const timeCell = document.getElementById(`time-${key}`);
+                if (timeCell) {
+                    timeCell.textContent = formatTime(total);
+                }
+            });
+
+            checkNotifications();
+        }
+
+        function checkNotifications() {
+            if (!sessionStartTime) return;
+
+            const sessionMinutes = Math.floor((Date.now() - sessionStartTime) / 60000);
+            const notifDiv = document.getElementById('notification');
+
+            if (sessionMinutes >= 30 && !notified30) {
+                notified30 = true;
+                showNotification('⏰ 30 minutes reached!', 'yellow');
+            }
+
+            if (sessionMinutes >= 40 && !notified40) {
+                notified40 = true;
+                showNotification('⏰ 40 minutes reached!', 'red');
+            }
+        }
+
+        function showNotification(message, color) {
+            const notifDiv = document.getElementById('notification');
+            notifDiv.textContent = message;
+            notifDiv.className = `notification ${color}`;
+            
+            // Play notification sound
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.2);
+
+            setTimeout(() => {
+                notifDiv.textContent = '';
+                notifDiv.className = '';
+            }, 5000);
+        }
+
+        function resetCategory(category) {
+            if (activeConditions[category]) {
+                stopRecording(category);
+            }
+
+            categories[category].forEach(condition => {
+                const key = `${category}|${condition}`;
+                conditionData[key] = { time: 0, status: 'idle' };
+            });
+
+            renderTable();
+            saveData();
+        }
+
+        function stopAll() {
+            Object.keys(activeConditions).forEach(category => {
+                stopRecording(category);
+            });
+            renderTable();
+            saveData();
+        }
+
+        function exportCSV() {
+            let csv = 'Ride Data Logger Report\n\n';
+            csv += `Driver,${document.getElementById('driver').value}\n`;
+            csv += `Annotator,${document.getElementById('annotator').value}\n`;
+            csv += `Date,${document.getElementById('date').value}\n`;
+            csv += `Vehicle,${document.getElementById('vehicle').value}\n`;
+            csv += `RSU NO,${document.getElementById('rsuNo').value}\n`;
+            csv += `R S U Start Date,${document.getElementById('rsuStartDate').value}\n`;
+            csv += `Drive Id,${document.getElementById('driveId').value}\n\n`;
+
+            csv += 'Category,Condition,Time (mm:ss),Time (seconds)\n';
+
+            Object.keys(categories).forEach(category => {
+                categories[category].forEach(condition => {
+                    const key = `${category}|${condition}`;
+                    let totalMs = conditionData[key].time;
+                    
+                    if (activeConditions[category] === condition) {
+                        totalMs += Date.now() - startTimes[category];
+                    }
+
+                    const seconds = Math.floor(totalMs / 1000);
+                    csv += `${category},${condition},${formatTime(totalMs)},${seconds}\n`;
+                });
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `RideLogger_${new Date().toISOString().split('T')[0]}_${Date.now()}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        function saveData() {
+            const data = {
+                driver: document.getElementById('driver').value,
+                annotator: document.getElementById('annotator').value,
+                date: document.getElementById('date').value,
+                vehicle: document.getElementById('vehicle').value,
+                rsuNo: document.getElementById('rsuNo').value,
+                rsuStartDate: document.getElementById('rsuStartDate').value,
+                driveId: document.getElementById('driveId').value,
+                conditionData: conditionData,
+                sessionStartTime: sessionStartTime
+            };
+            localStorage.setItem('rideLoggerData', JSON.stringify(data));
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('rideLoggerData');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    document.getElementById('driver').value = data.driver || '';
+                    document.getElementById('annotator').value = data.annotator || '';
+                    document.getElementById('date').value = data.date || '';
+                    document.getElementById('vehicle').value = data.vehicle || '';
+                    document.getElementById('rsuNo').value = data.rsuNo || '';
+                    document.getElementById('rsuStartDate').value = data.rsuStartDate || '';
+                    document.getElementById('driveId').value = data.driveId || '';
+                    
+                    if (data.conditionData) {
+                        conditionData = data.conditionData;
+                    }
+                    if (data.sessionStartTime) {
+                        sessionStartTime = data.sessionStartTime;
+                    }
+                    
+                    renderTable();
+                } catch (e) {
+                    console.error('Error loading data:', e);
+                }
+            }
+        }
+
+        // Auto-save on input change
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('change', saveData);
+        });
+
+        // Set today's date as default
+        document.getElementById('date').valueAsDate = new Date();
+
+        // Initialize
+        initData();
+    </script>
+</body>
+</html>

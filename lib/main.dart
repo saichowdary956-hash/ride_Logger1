@@ -45,10 +45,10 @@ class _LoggerScreenState extends State<LoggerScreen> {
   final TextEditingController commentsCtrl = TextEditingController();
 
   DateTime selectedDate = DateTime.now();
-  String? activeCondition;
-  String? activeCategory;
-  int startTime = 0;
+  Map<String, String?> activeConditions = {}; // Track active condition per category
+  Map<String, int> startTimes = {}; // Track start time per category
   Timer? timer;
+  int lastNotificationMinute = 0;
 
   final Map<String, List<String>> categories = {
     'Weather': ['Sunny', 'Low Sun', 'Cloudy', 'Rain', 'Snow', 'Fog'],
@@ -65,6 +65,7 @@ class _LoggerScreenState extends State<LoggerScreen> {
     super.initState();
     _initializeConditions();
     _loadData();
+    _startTimer();
   }
 
   void _initializeConditions() {
@@ -76,14 +77,65 @@ class _LoggerScreenState extends State<LoggerScreen> {
     });
   }
 
+  void _startTimer() {
+    timer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (mounted && activeConditions.isNotEmpty) {
+        setState(() {});
+        _checkTimeNotification();
+      }
+    });
+  }
+
+  void _checkTimeNotification() {
+    int totalSeconds = _calculateTotalSessionTime();
+    int totalMinutes = totalSeconds ~/ 60;
+
+    if (totalMinutes >= 20 && totalMinutes > lastNotificationMinute) {
+      if (totalMinutes == 20 || (totalMinutes >= 50 && (totalMinutes - 20) % 30 == 0)) {
+        lastNotificationMinute = totalMinutes;
+        _showTimeAlert(totalMinutes);
+      }
+    }
+  }
+
+  void _showTimeAlert(int minutes) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('⏰ $minutes Minutes Reached!'),
+        backgroundColor: Colors.orange,
+        duration: const Duration(seconds: 5),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  int _calculateTotalSessionTime() {
+    int total = 0;
+    conditionData.forEach((category, conditions) {
+      conditions.forEach((condition, time) {
+        total += time;
+      });
+    });
+
+    // Add current active recordings
+    activeConditions.forEach((category, condition) {
+      if (condition != null && startTimes.containsKey(category)) {
+        final elapsed = ((DateTime.now().millisecondsSinceEpoch - startTimes[category]!) / 1000).floor();
+        total += elapsed;
+      }
+    });
+
+    return total;
+  }
+
   void toggleCondition(String category, String condition) {
-    final isActive = activeCategory == category && activeCondition == condition;
+    final isActive = activeConditions[category] == condition;
     
     if (isActive) {
-      _stopRecording();
+      _stopRecording(category);
     } else {
-      if (activeCondition != null) {
-        _stopRecording();
+      if (activeConditions[category] != null) {
+        _stopRecording(category);
       }
       _startRecording(category, condition);
     }
@@ -91,37 +143,30 @@ class _LoggerScreenState extends State<LoggerScreen> {
 
   void _startRecording(String category, String condition) {
     setState(() {
-      activeCategory = category;
-      activeCondition = condition;
-      startTime = DateTime.now().millisecondsSinceEpoch;
-    });
-    
-    timer = Timer.periodic(const Duration(seconds: 1), (t) {
-      if (mounted) {
-        setState(() {});
-      }
+      activeConditions[category] = condition;
+      startTimes[category] = DateTime.now().millisecondsSinceEpoch;
     });
   }
 
-  void _stopRecording() {
-    if (activeCondition == null || activeCategory == null) return;
+  void _stopRecording(String category) {
+    final condition = activeConditions[category];
+    if (condition == null) return;
     
-    timer?.cancel();
-    final elapsed = ((DateTime.now().millisecondsSinceEpoch - startTime) / 1000).floor();
+    final elapsed = ((DateTime.now().millisecondsSinceEpoch - startTimes[category]!) / 1000).floor();
     
     setState(() {
-      conditionData[activeCategory!]![activeCondition!] = 
-          (conditionData[activeCategory!]![activeCondition!] ?? 0) + elapsed;
-      activeCategory = null;
-      activeCondition = null;
+      conditionData[category]![condition] = 
+          (conditionData[category]![condition] ?? 0) + elapsed;
+      activeConditions.remove(category);
+      startTimes.remove(category);
     });
     
     _saveData();
   }
 
   void resetCategory(String category) {
-    if (activeCategory == category) {
-      _stopRecording();
+    if (activeConditions.containsKey(category)) {
+      _stopRecording(category);
     }
     
     setState(() {
@@ -137,7 +182,10 @@ class _LoggerScreenState extends State<LoggerScreen> {
   }
 
   void stopAll() {
-    _stopRecording();
+    final categoriesToStop = activeConditions.keys.toList();
+    for (var category in categoriesToStop) {
+      _stopRecording(category);
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('All recording stopped')),
     );
@@ -145,6 +193,9 @@ class _LoggerScreenState extends State<LoggerScreen> {
 
   void exportCSV() {
     final StringBuffer csv = StringBuffer();
+    final totalSeconds = _calculateTotalSessionTime();
+    final totalMinutes = (totalSeconds / 60).toStringAsFixed(2);
+    
     csv.writeln('DataLogger Report');
     csv.writeln('Driver,${driverCtrl.text}');
     csv.writeln('Annotator,${annotatorCtrl.text}');
@@ -152,13 +203,21 @@ class _LoggerScreenState extends State<LoggerScreen> {
     csv.writeln('Vehicle,${vehicleCtrl.text}');
     csv.writeln('RSU No,${rsuNoCtrl.text}');
     csv.writeln('Drive ID,${driveIdCtrl.text}');
+    csv.writeln('Overall Session Time,${_formatTime(totalSeconds)} ($totalMinutes minutes)');
     csv.writeln('Comments,"${commentsCtrl.text.replaceAll('"', '""')}"');
     csv.writeln('');
     csv.writeln('Category,Condition,Time (seconds),Time (minutes)');
 
     categories.forEach((category, conditions) {
       for (var condition in conditions) {
-        final seconds = conditionData[category]![condition] ?? 0;
+        int seconds = conditionData[category]![condition] ?? 0;
+        
+        // Add current elapsed if active
+        if (activeConditions[category] == condition && startTimes.containsKey(category)) {
+          final elapsed = ((DateTime.now().millisecondsSinceEpoch - startTimes[category]!) / 1000).floor();
+          seconds += elapsed;
+        }
+        
         final minutes = (seconds / 60).toStringAsFixed(2);
         csv.writeln('$category,$condition,$seconds,$minutes');
       }
@@ -182,8 +241,8 @@ class _LoggerScreenState extends State<LoggerScreen> {
 
   int _getCurrentTime(String category, String condition) {
     final baseTime = conditionData[category]![condition] ?? 0;
-    if (activeCategory == category && activeCondition == condition) {
-      final elapsed = ((DateTime.now().millisecondsSinceEpoch - startTime) / 1000).floor();
+    if (activeConditions[category] == condition && startTimes.containsKey(category)) {
+      final elapsed = ((DateTime.now().millisecondsSinceEpoch - startTimes[category]!) / 1000).floor();
       return baseTime + elapsed;
     }
     return baseTime;
@@ -340,7 +399,7 @@ class _LoggerScreenState extends State<LoggerScreen> {
                     ),
                   ),
                   ...conditions.map((condition) {
-                    final isActive = activeCategory == category && activeCondition == condition;
+                    final isActive = activeConditions[category] == condition;
                     final timeInSeconds = _getCurrentTime(category, condition);
                     final displayTime = _formatTime(timeInSeconds);
 

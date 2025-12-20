@@ -1,7 +1,6 @@
 name: datalogger
-description: "A Flutter app for logging perception data with weather conditions."
+description: A comprehensive data logging application for vehicle testing and annotation
 publish_to: 'none'
-
 version: 1.0.0+1
 
 environment:
@@ -10,13 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  shared_preferences: ^2.2.2
-  path_provider: ^2.1.1
   intl: ^0.19.0
-  hive: ^2.2.3
-  hive_flutter: ^1.1.0
-  http: ^0.13.6
-  connectivity_plus: ^4.0.2
+  shared_preferences: ^2.2.2
 
 dev_dependencies:
   flutter_test:
