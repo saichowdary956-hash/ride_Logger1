@@ -224,7 +224,7 @@ class _RideLoggerScreenState extends State<RideLoggerScreen> {
     final totalSeconds = (ms / 1000).floor();
     final mins = totalSeconds ~/ 60;
     final secs = totalSeconds % 60;
-    return '${mins}:${secs.toString().padStart(2, '0')}';
+    return '$mins:${secs.toString().padLeft(2, '0')}';
   }
 
   int _getCurrentTime(String category, String condition) {
