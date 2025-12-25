@@ -123,21 +123,63 @@
             background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
         }
         
-        /* Category hover effects */
-        .category-Weather tbody tr:hover:not(.active-row) {
-            background: linear-gradient(90deg, #e0f7ff 0%, #f0fbff 100%) !important;
+        /* Conditions Grid Layout */
+        .conditions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            padding: 20px;
+            background: white;
         }
-        .category-Roadtype tbody tr:hover:not(.active-row) {
-            background: linear-gradient(90deg, #e0fff0 0%, #f0fff8 100%) !important;
+        
+        .condition-card {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 12px;
+            background: #f9f9f9;
+            border-radius: 10px;
+            transition: all 0.3s;
         }
-        .category-Lighting tbody tr:hover:not(.active-row) {
-            background: linear-gradient(90deg, #fff5e0 0%, #fffaf0 100%) !important;
+        
+        .condition-btn {
+            background: linear-gradient(135deg, #51cf66 0%, #37b24d 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(81, 207, 102, 0.3);
         }
-        .category-Traffic tbody tr:hover:not(.active-row) {
-            background: linear-gradient(90deg, #ffe0f0 0%, #fff0f8 100%) !important;
+        
+        .condition-btn:hover {
+            background: linear-gradient(135deg, #40c057 0%, #2f9e44 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(81, 207, 102, 0.5);
         }
-        .category-Speed tbody tr:hover:not(.active-row) {
-            background: linear-gradient(90deg, #f0e0ff 0%, #f8f0ff 100%) !important;
+        
+        .condition-btn.active {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.5);
+            animation: pulse 2s infinite;
+        }
+        
+        .condition-time {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+            padding: 5px;
+        }
+        
+        .condition-status {
+            font-size: 14px;
+            text-align: center;
+            padding: 4px;
+            border-radius: 5px;
         }
 
         .reset-btn {
@@ -378,11 +420,11 @@
 
     <script>
         const categories = {
-            'Weather': ['Sunny', 'Low Sun', 'Cloudy', 'Rain', 'Snow', 'Fog'],
+            'Weather': ['Sunny', 'Low Sun', 'Cloudy', 'Rain', 'Fog', 'Snow'],
             'Roadtype': ['City', 'Country', 'Highway', 'Construction site', 'Tunnel'],
-            'Lighting': ['Day', 'Dawn', 'Dusk', 'Lit Night', 'Dark Night'],
+            'Lighting': ['Day', 'Dawn', 'Lit Night', 'Dark Night'],
             'Traffic': ['Flow', 'Jam'],
-            'Speed': ['0-2mph', '3-18mph', '19-37mph', '38-55mph', '56-80mph', '81-155mph']
+            'Speed': ['3-18mph', '19-37mph', '38-55mph', '56-80mph', '81-155mph']
         };
 
         let conditionData = {};
@@ -426,52 +468,31 @@
                         <h3>${category}</h3>
                         <button class="reset-btn" onclick="resetCategory('${category}')">🔄 Reset ${category}</button>
                     </div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Category</th>
-                                <th>Condition</th>
-                                <th>Time</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-${category}" class="category-${category}"></tbody>
-                    </table>
+                    <div class="conditions-grid" id="grid-${category}"></div>
                 `;
                 container.appendChild(section);
 
-                const tbody = document.getElementById(`tbody-${category}`);
+                const grid = document.getElementById(`grid-${category}`);
                 categories[category].forEach((condition, index) => {
                     const key = `${category}|${condition}`;
                     const data = conditionData[key];
                     const timeStr = formatTime(data.time);
                     const isActive = activeConditions[category] === condition;
                     
-                    const row = document.createElement('tr');
-                    row.style.cursor = 'pointer';
-                    row.style.transition = 'all 0.3s';
-                    if (isActive) {
-                        row.className = 'active-row';
-                        row.style.background = 'linear-gradient(90deg, #ffe6e6 0%, #fff0f0 100%)';
-                        row.style.fontWeight = 'bold';
-                        row.style.boxShadow = '0 2px 8px rgba(255, 100, 100, 0.2)';
-                    }
-                    row.onclick = () => toggleCondition(category, condition);
-                    row.onmouseenter = () => { if (!isActive) row.style.transform = 'scale(1.01)'; };
-                    row.onmouseleave = () => { if (!isActive) row.style.transform = 'scale(1)'; };
-                    
-                    row.innerHTML = `
-                        <td>${index === 0 ? category : ''}</td>
-                        <td>
+                    const conditionCard = document.createElement('div');
+                    conditionCard.className = 'condition-card';
+                    conditionCard.innerHTML = `
+                        <button class="condition-btn ${isActive ? 'active' : ''}" 
+                                onclick="toggleCondition('${category}', '${condition}')">
                             ${isActive ? '🔴 ' : ''}${condition}
-                        </td>
-                        <td id="time-${category}-${condition}">${timeStr}</td>
-                        <td class="${isActive ? 'status-active' : 'status-stopped'}" 
-                            id="status-${category}-${condition}">
+                        </button>
+                        <div class="condition-time" id="time-${category}-${condition}">${timeStr}</div>
+                        <div class="condition-status ${isActive ? 'status-active' : 'status-stopped'}" 
+                             id="status-${category}-${condition}">
                             ${isActive ? '● Recording' : data.status}
-                        </td>
+                        </div>
                     `;
-                    tbody.appendChild(row);
+                    grid.appendChild(conditionCard);
                 });
             });
         }
