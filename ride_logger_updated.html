@@ -13,7 +13,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #1a1a1a;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }
@@ -86,82 +86,102 @@
             border-color: #667eea;
         }
 
-        .conditions-table {
-            width: 100%;
-            border-collapse: collapse;
-            background: #2a2a2a;
-            border-radius: 8px;
+        .category-section {
+            margin-bottom: 25px;
+            border-radius: 12px;
             overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
-        
-        .conditions-table thead {
-            background: #3a3a3a;
-        }
-        
-        .conditions-table th {
+
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
             color: white;
-            font-weight: 600;
-            font-size: 16px;
-            padding: 15px 10px;
-            text-align: left;
-            border-bottom: 1px solid #444;
         }
-        
-        .conditions-table tbody tr {
-            border-bottom: 1px solid #333;
-        }
-        
-        .conditions-table tbody tr:last-child {
-            border-bottom: none;
-        }
-        
-        .conditions-table td {
-            padding: 12px 10px;
+
+        .category-header h3 {
+            margin: 0;
+            font-size: 1.1em;
             color: white;
         }
         
-        .category-label {
-            color: #ff6b6b;
-            font-weight: 600;
-            font-size: 15px;
+        /* Category-specific gradients */
+        .category-Weather .category-header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        .category-Roadtype .category-header {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+        .category-Lighting .category-header {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+        .category-Traffic .category-header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .category-Speed .category-header {
+            background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
         }
         
-        .category-spacer {
-            height: 5px;
-            background: transparent;
+        /* Conditions Grid Layout - Vertical for Mobile */
+        .conditions-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 15px;
+            background: white;
+        }
+        
+        .condition-card {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 10px;
+            padding: 6px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            transition: all 0.3s;
+            width: 100%;
         }
         
         .condition-btn {
-            background: #51cf66;
+            background: linear-gradient(135deg, #51cf66 0%, #37b24d 100%);
+            color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 16px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 11px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
-            color: white;
-            min-width: 100px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 8px rgba(81, 207, 102, 0.3);
+            flex: 1;
+            min-width: 90px;
         }
         
         .condition-btn:hover {
-            background: #40c057;
-            transform: scale(1.02);
+            background: linear-gradient(135deg, #40c057 0%, #2f9e44 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(81, 207, 102, 0.5);
         }
         
         .condition-btn.active {
-            background: #ff6b6b;
-            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.5);
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.5);
             animation: pulse 2s infinite;
         }
         
         .condition-time {
-            font-size: 16px;
-            font-weight: 500;
-            color: white;
-            text-align: center;
-            min-width: 90px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #333;
+            text-align: right;
+            padding: 4px 8px;
+            min-width: 70px;
+            background: white;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
         }
         
         .condition-status {
@@ -413,78 +433,20 @@
         }
 
         @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-            
             h1 {
-                font-size: 1.5em;
-                padding: 15px;
-            }
-            
-            .card {
-                padding: 12px;
-                margin-bottom: 12px;
+                font-size: 1.8em;
             }
             
             .session-details {
                 grid-template-columns: 1fr;
-                gap: 12px;
             }
             
-            .input-group input {
-                font-size: 16px;
-                padding: 12px;
-            }
-            
-            .conditions-table th {
-                font-size: 14px;
-                padding: 12px 8px;
-            }
-            
-            .conditions-table td {
-                padding: 10px 8px;
+            table {
                 font-size: 14px;
             }
             
-            .category-label {
-                font-size: 14px;
-            }
-            
-            .condition-btn {
-                font-size: 15px;
-                padding: 10px 16px;
-                min-width: 90px;
-            }
-            
-            .condition-time {
-                font-size: 15px;
-                min-width: 85px;
-            }
-            
-            .comments-box {
-                font-size: 16px;
-                min-height: 120px;
-            }
-            
-            .action-buttons {
-                grid-template-columns: 1fr;
-            }
-            
-            .action-btn {
-                padding: 16px;
-                font-size: 16px;
-            }
-            
-            .modal-content {
-                margin: 0 15px;
-                min-width: auto;
-                max-width: 90%;
-            }
-            
-            .reset-btn {
-                padding: 8px 12px;
-                font-size: 13px;
+            th, td {
+                padding: 8px;
             }
         }
     </style>
@@ -600,69 +562,43 @@
 
         function renderConditions() {
             const container = document.getElementById('conditions-container');
-            
-            let tableHTML = `
-                <table class="conditions-table">
-                    <thead>
-                        <tr>
-                            <th>Category</th>
-                            <th>Condition</th>
-                            <th>Time</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
+            container.innerHTML = '';
 
-            Object.keys(categories).forEach((category, categoryIndex) => {
-                // Add category header row with reset button
-                tableHTML += `
-                    <tr class="category-header-row">
-                        <td colspan="3" style="background: #3a3a3a; padding: 12px;">
-                            <span style="color: #ff6b6b; font-weight: 600; font-size: 15px;">${category}</span>
-                        </td>
-                        <td style="background: #3a3a3a; padding: 12px; text-align: right;">
-                            <button class="reset-btn" onclick="resetCategory('${category}')">🔄 Reset</button>
-                        </td>
-                    </tr>
+            Object.keys(categories).forEach(category => {
+                const section = document.createElement('div');
+                section.className = `category-section category-${category}`;
+                section.innerHTML = `
+                    <div class="category-header category-${category}">
+                        <h3>${category}</h3>
+                        <button class="reset-btn" onclick="resetCategory('${category}')">🔄 Reset ${category}</button>
+                    </div>
+                    <div class="conditions-grid" id="grid-${category}"></div>
                 `;
-                
+                container.appendChild(section);
+
+                const grid = document.getElementById(`grid-${category}`);
                 categories[category].forEach((condition, index) => {
                     const key = `${category}|${condition}`;
                     const data = conditionData[key];
                     const timeStr = formatTime(data.time);
                     const isActive = activeConditions[category] === condition;
                     
-                    tableHTML += `
-                        <tr>
-                            <td></td>
-                            <td>
-                                <button class="condition-btn ${isActive ? 'active' : ''}" 
-                                        onclick="toggleCondition('${category}', '${condition}')">
-                                    ${condition}
-                                </button>
-                            </td>
-                            <td class="condition-time" id="time-${category}-${condition}">${timeStr}</td>
-                            <td style="display: none;" class="condition-status ${isActive ? 'status-active' : 'status-stopped'}" 
-                                 id="status-${category}-${condition}">
-                                ${isActive ? '● Recording' : data.status}
-                            </td>
-                        </tr>
+                    const conditionCard = document.createElement('div');
+                    conditionCard.className = 'condition-card';
+                    conditionCard.innerHTML = `
+                        <button class="condition-btn ${isActive ? 'active' : ''}" 
+                                onclick="toggleCondition('${category}', '${condition}')">
+                            ${isActive ? '🔴 ' : ''}${condition}
+                        </button>
+                        <div class="condition-time" id="time-${category}-${condition}">${timeStr}</div>
+                        <div class="condition-status ${isActive ? 'status-active' : 'status-stopped'}" 
+                             id="status-${category}-${condition}">
+                            ${isActive ? '● Recording' : data.status}
+                        </div>
                     `;
+                    grid.appendChild(conditionCard);
                 });
-                
-                // Add spacing between categories
-                if (categoryIndex < Object.keys(categories).length - 1) {
-                    tableHTML += `<tr class="category-spacer"><td colspan="4"></td></tr>`;
-                }
             });
-
-            tableHTML += `
-                    </tbody>
-                </table>
-            `;
-            
-            container.innerHTML = tableHTML;
         }
 
         function toggleCondition(category, condition) {
@@ -881,55 +817,11 @@
                 totalSessionSeconds = Math.floor((endTime - sessionStartTime) / 1000);
             }
 
-            let csv = 'DataLogger Report\n';
-            csv += `Driver,${driver}\n`;
-            csv += `Annotator,${annotator}\n`;
-            csv += `Date,${date}\n`;
-            csv += `Vehicle,${vehicle}\n`;
-            csv += `RSU No,${rsuNo}\n`;
-            csv += `RSU Storage,${rsuStorage}%\n`;
-            csv += `Drive ID,${driveId}\n`;
-            csv += `Overall Session Time,${formatTime(totalSessionSeconds)}\n`;
-            csv += `Comments,"${comments.replace(/"/g, '""')}"\n\n`;
-            
-            // Horizontal format - categories as rows, conditions as columns
-            csv += 'Category';
-            
-            // Get max number of conditions across all categories
-            const maxConditions = Math.max(...Object.keys(categories).map(cat => categories[cat].length));
-            
-            // Add column headers for each condition position
-            for (let i = 0; i < maxConditions; i++) {
-                csv += `,Condition ${i + 1},Time ${i + 1}`;
-            }
-            csv += '\n';
-            
-            // Add data for each category
-            Object.keys(categories).forEach(category => {
-                csv += category;
-                
-                categories[category].forEach(condition => {
-                    const key = `${category}|${condition}`;
-                    let seconds = conditionData[key].time;
-                    
-                    // Add current elapsed time if this condition is active
-                    if (activeConditions[category] === condition) {
-                        const elapsed = Math.floor((Date.now() - startTimes[category]) / 1000);
-                        seconds += elapsed;
-                    }
-                    
-                    const timeFormatted = formatTime(seconds);
-                    csv += `,${condition},${timeFormatted}`;
-                });
-                
-                // Fill remaining columns with empty values
-                const remainingCols = maxConditions - categories[category].length;
-                for (let i = 0; i < remainingCols; i++) {
-                    csv += ',,';
-                }
-                
-                csv += '\n';
-            });
+            const totalSessionTime = formatTime(totalSessionSeconds);
+
+            // Horizontal CSV format - all in one row
+            let csv = 'Driver,Annotator,Date,Vehicle,RSU No,Drive ID,RSU Storage (%),Overall Session Time,Comments\n';
+            csv += `"${driver}","${annotator}","${date}","${vehicle}","${rsuNo}","${driveId}","${rsuStorage}","${totalSessionTime}","${comments.replace(/"/g, '""')}"\n`;
 
             const filename = `DataLogger_${date}_${Date.now()}.csv`;
             downloadCSV(csv, filename);
