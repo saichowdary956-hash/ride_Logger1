@@ -574,6 +574,8 @@
         let startTimes = {}; // Track start time per category
         let timerInterval = null;
         let lastNotificationMinute = 0; // Track last notification time
+        let recordingSessions = {}; // Track individual recording sessions
+        let sessionCounter = 1; // Counter for session numbers
         
         // Session time tracking
         let sessionStartTime = null;
@@ -709,6 +711,16 @@
             conditionData[key].time += elapsed;
             conditionData[key].status = 'Stopped';
             
+            // Save this recording session
+            if (!recordingSessions[category]) {
+                recordingSessions[category] = [];
+            }
+            recordingSessions[category].push({
+                condition: condition,
+                duration: elapsed,
+                sessionNumber: sessionCounter
+            });
+            
             delete activeConditions[category];
             delete startTimes[category];
             
@@ -716,6 +728,7 @@
             if (Object.keys(activeConditions).length === 0) {
                 clearInterval(timerInterval);
                 timerInterval = null;
+                sessionCounter++; // Increment session counter when all recordings stop
             }
             
             renderConditions();
@@ -818,6 +831,11 @@
                         conditionData[key].status = 'Stopped';
                     });
                     
+                    // Clear recording sessions for this category
+                    if (recordingSessions[category]) {
+                        recordingSessions[category] = [];
+                    }
+                    
                     renderConditions();
                     saveData();
                     showAlert(`${category} reset successfully`, 'success');
@@ -874,7 +892,7 @@
             const comments = document.getElementById('comments').value;
             const rsuStorage = document.getElementById('rsuStorage').value;
 
-            // Calculate overall session time (actual session duration)
+            // Calculate overall session time
             let totalSessionSeconds = 0;
             if (sessionStartTime) {
                 const endTime = sessionEndTime || (isSessionActive ? Date.now() : sessionStartTime);
@@ -892,43 +910,45 @@
             csv += `Overall Session Time,${formatTime(totalSessionSeconds)}\n`;
             csv += `Comments,"${comments.replace(/"/g, '""')}"\n\n`;
             
-            // Horizontal format - categories as rows, conditions as columns
-            csv += 'Category';
-            
-            // Get max number of conditions across all categories
-            const maxConditions = Math.max(...Object.keys(categories).map(cat => categories[cat].length));
-            
-            // Add column headers for each condition position
-            for (let i = 0; i < maxConditions; i++) {
-                csv += `,Condition ${i + 1},Time ${i + 1}`;
-            }
-            csv += '\n';
-            
-            // Add data for each category
+            // Export each category in horizontal format
             Object.keys(categories).forEach(category => {
-                csv += category;
+                csv += `Category\n`;
+                csv += `${category} (hh:mm:ss)`;
                 
+                // Add condition headers
                 categories[category].forEach(condition => {
-                    const key = `${category}|${condition}`;
-                    let seconds = conditionData[key].time;
-                    
-                    // Add current elapsed time if this condition is active
-                    if (activeConditions[category] === condition) {
-                        const elapsed = Math.floor((Date.now() - startTimes[category]) / 1000);
-                        seconds += elapsed;
+                    csv += `,${condition}`;
+                });
+                csv += '\n';
+                
+                // Get all sessions for this category
+                const sessions = recordingSessions[category] || [];
+                
+                // Group sessions by session number
+                const sessionGroups = {};
+                sessions.forEach(session => {
+                    if (!sessionGroups[session.sessionNumber]) {
+                        sessionGroups[session.sessionNumber] = {};
                     }
-                    
-                    const timeFormatted = formatTime(seconds);
-                    csv += `,${condition},${timeFormatted}`;
+                    sessionGroups[session.sessionNumber][session.condition] = session.duration;
                 });
                 
-                // Fill remaining columns with empty values
-                const remainingCols = maxConditions - categories[category].length;
-                for (let i = 0; i < remainingCols; i++) {
-                    csv += ',,';
-                }
+                // Export each session as a row
+                Object.keys(sessionGroups).forEach(sessionNum => {
+                    csv += sessionNum; // Session/Route number
+                    
+                    categories[category].forEach(condition => {
+                        const duration = sessionGroups[sessionNum][condition] || 0;
+                        if (duration > 0) {
+                            csv += `,${formatTime(duration)}`;
+                        } else {
+                            csv += `,`;
+                        }
+                    });
+                    csv += '\n';
+                });
                 
-                csv += '\n';
+                csv += '\n'; // Empty line between categories
             });
 
             const filename = `DataLogger_${date}_${Date.now()}.csv`;
@@ -968,7 +988,9 @@
                 date: document.getElementById('date').value,
                 comments: document.getElementById('comments').value,
                 rsuStorage: document.getElementById('rsuStorage').value,
-                conditionData: conditionData
+                conditionData: conditionData,
+                recordingSessions: recordingSessions,
+                sessionCounter: sessionCounter
             };
             localStorage.setItem('dataLoggerData', JSON.stringify(data));
         }
@@ -990,6 +1012,12 @@
                     conditionData = data.conditionData;
                     renderConditions();
                 }
+                if (data.recordingSessions) {
+                    recordingSessions = data.recordingSessions;
+                }
+                if (data.sessionCounter) {
+                    sessionCounter = data.sessionCounter;
+                }
             }
         }
 
@@ -998,6 +1026,31 @@
             document.getElementById(id).addEventListener('change', saveData);
         });
         document.getElementById('comments').addEventListener('input', saveData);
+        
+        // Auto-export CSV before page unload/refresh to prevent data loss
+        window.addEventListener('beforeunload', function(e) {
+            // Check if there's any recorded data
+            let hasData = false;
+            Object.keys(conditionData).forEach(key => {
+                if (conditionData[key].time > 0) {
+                    hasData = true;
+                }
+            });
+            
+            // Also check for active recordings
+            const hasActiveRecordings = Object.keys(activeConditions).length > 0;
+            
+            if (hasData || hasActiveRecordings) {
+                // Auto-export CSV before leaving
+                exportCSV();
+                
+                // Show warning message
+                const message = 'Your data has been auto-saved as CSV. Do you really want to leave?';
+                e.preventDefault();
+                e.returnValue = message;
+                return message;
+            }
+        });
     </script>
 </body>
 </html>
