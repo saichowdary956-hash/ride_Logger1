@@ -910,30 +910,38 @@
             csv += `Overall Session Time,${formatTime(totalSessionSeconds)}\n`;
             csv += `Comments,"${comments.replace(/"/g, '""')}"\n\n`;
             
-            // Horizontal format with categories as columns
+            // Horizontal format with all categories and ALL conditions
             csv += 'Category';
             Object.keys(categories).forEach(category => {
                 csv += `,${category},,`; // Category name with spacing
             });
             csv += '\n';
             
-            // Find max number of sessions across all categories
-            let maxSessions = 0;
+            // Find max number of conditions across all categories
+            let maxConditions = 0;
             Object.keys(categories).forEach(category => {
-                const sessions = recordingSessions[category] || [];
-                maxSessions = Math.max(maxSessions, sessions.length);
+                maxConditions = Math.max(maxConditions, categories[category].length);
             });
             
-            // Create rows for each session index
-            for (let i = 0; i < maxSessions; i++) {
+            // Create rows for each condition index
+            for (let i = 0; i < maxConditions; i++) {
                 csv += ''; // Empty first column
                 
                 Object.keys(categories).forEach(category => {
-                    const sessions = recordingSessions[category] || [];
-                    if (sessions[i]) {
-                        csv += `,${sessions[i].condition},${formatTime(sessions[i].duration)},`;
+                    const condition = categories[category][i];
+                    
+                    if (condition) {
+                        // Check if this condition was recorded
+                        const sessions = recordingSessions[category] || [];
+                        const recorded = sessions.find(s => s.condition === condition);
+                        
+                        if (recorded && recorded.duration > 0) {
+                            csv += `,${condition},${formatTime(recorded.duration)},`;
+                        } else {
+                            csv += `,${condition},00:00:00,`;
+                        }
                     } else {
-                        csv += ',,,'; // Empty cells for this category
+                        csv += ',,,'; // Empty cells if category has fewer conditions
                     }
                 });
                 csv += '\n';
