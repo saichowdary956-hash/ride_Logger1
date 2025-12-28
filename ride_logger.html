@@ -910,60 +910,22 @@
             csv += `Overall Session Time,${formatTime(totalSessionSeconds)}\n`;
             csv += `Comments,"${comments.replace(/"/g, '""')}"\n\n`;
             
-            // Build horizontal format with category headers and condition sub-headers
-            // First row: Category headers
-            csv += 'Session';
+            // Vertical format with category headers
+            csv += 'Category\n';
+            
+            // For each category, list all recorded conditions
             Object.keys(categories).forEach(category => {
-                csv += `,${category} (hh:mm:ss)`;
-                // Add empty cells for remaining conditions in this category
-                for (let i = 1; i < categories[category].length; i++) {
-                    csv += ',';
-                }
-            });
-            csv += '\n';
-            
-            // Second row: Condition names
-            csv += '';
-            Object.keys(categories).forEach(category => {
-                categories[category].forEach(condition => {
-                    csv += `,${condition}`;
-                });
-            });
-            csv += '\n';
-            
-            // Get all unique session numbers
-            const allSessionNumbers = new Set();
-            Object.keys(recordingSessions).forEach(category => {
-                recordingSessions[category].forEach(session => {
-                    allSessionNumbers.add(session.sessionNumber);
-                });
-            });
-            
-            // Sort session numbers
-            const sortedSessions = Array.from(allSessionNumbers).sort((a, b) => a - b);
-            
-            // For each session, create a row with all category data
-            sortedSessions.forEach(sessionNum => {
-                csv += sessionNum;
+                const sessions = recordingSessions[category] || [];
                 
-                // For each category and condition
-                Object.keys(categories).forEach(category => {
-                    categories[category].forEach(condition => {
-                        // Find if this condition was recorded in this session
-                        const sessions = recordingSessions[category] || [];
-                        const sessionData = sessions.find(s => 
-                            s.sessionNumber === sessionNum && s.condition === condition
-                        );
-                        
-                        if (sessionData && sessionData.duration > 0) {
-                            csv += `,${formatTime(sessionData.duration)}`;
-                        } else {
-                            csv += `,`;
-                        }
+                // Only show category if it has recorded data
+                if (sessions.length > 0) {
+                    csv += `${category}\n`;
+                    
+                    // List each recorded session under this category
+                    sessions.forEach(session => {
+                        csv += `    ${session.condition},${formatTime(session.duration)}\n`;
                     });
-                });
-                
-                csv += '\n';
+                }
             });
 
             const filename = `DataLogger_${date}_${Date.now()}.csv`;
