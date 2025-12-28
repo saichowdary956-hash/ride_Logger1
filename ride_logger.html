@@ -910,23 +910,34 @@
             csv += `Overall Session Time,${formatTime(totalSessionSeconds)}\n`;
             csv += `Comments,"${comments.replace(/"/g, '""')}"\n\n`;
             
-            // Vertical format with category headers
-            csv += 'Category\n';
+            // Horizontal format with categories as columns
+            csv += 'Category';
+            Object.keys(categories).forEach(category => {
+                csv += `,${category},,`; // Category name with spacing
+            });
+            csv += '\n';
             
-            // For each category, list all recorded conditions
+            // Find max number of sessions across all categories
+            let maxSessions = 0;
             Object.keys(categories).forEach(category => {
                 const sessions = recordingSessions[category] || [];
-                
-                // Only show category if it has recorded data
-                if (sessions.length > 0) {
-                    csv += `${category}\n`;
-                    
-                    // List each recorded session under this category
-                    sessions.forEach(session => {
-                        csv += `    ${session.condition},${formatTime(session.duration)}\n`;
-                    });
-                }
+                maxSessions = Math.max(maxSessions, sessions.length);
             });
+            
+            // Create rows for each session index
+            for (let i = 0; i < maxSessions; i++) {
+                csv += ''; // Empty first column
+                
+                Object.keys(categories).forEach(category => {
+                    const sessions = recordingSessions[category] || [];
+                    if (sessions[i]) {
+                        csv += `,${sessions[i].condition},${formatTime(sessions[i].duration)},`;
+                    } else {
+                        csv += ',,,'; // Empty cells for this category
+                    }
+                });
+                csv += '\n';
+            }
 
             const filename = `DataLogger_${date}_${Date.now()}.csv`;
             downloadCSV(csv, filename);
