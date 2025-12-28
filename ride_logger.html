@@ -910,12 +910,23 @@
             csv += `Overall Session Time,${formatTime(totalSessionSeconds)}\n`;
             csv += `Comments,"${comments.replace(/"/g, '""')}"\n\n`;
             
-            // Build horizontal format: Session | All Categories
-            // First, create category headers
+            // Build horizontal format with category headers and condition sub-headers
+            // First row: Category headers
             csv += 'Session';
             Object.keys(categories).forEach(category => {
+                csv += `,${category} (hh:mm:ss)`;
+                // Add empty cells for remaining conditions in this category
+                for (let i = 1; i < categories[category].length; i++) {
+                    csv += ',';
+                }
+            });
+            csv += '\n';
+            
+            // Second row: Condition names
+            csv += '';
+            Object.keys(categories).forEach(category => {
                 categories[category].forEach(condition => {
-                    csv += `,${category}-${condition}`;
+                    csv += `,${condition}`;
                 });
             });
             csv += '\n';
