@@ -873,7 +873,7 @@
                 stopRecording(category);
             });
             
-            // Stop session recording
+            // Stop session recording and capture end time
             if (isSessionActive && sessionStartTime) {
                 sessionEndTime = Date.now();
                 isSessionActive = false;
@@ -986,7 +986,10 @@
                 rsuStorage: document.getElementById('rsuStorage').value,
                 conditionData: conditionData,
                 recordingSessions: recordingSessions,
-                sessionCounter: sessionCounter
+                sessionCounter: sessionCounter,
+                sessionStartTime: sessionStartTime,
+                sessionEndTime: sessionEndTime,
+                isSessionActive: isSessionActive
             };
             localStorage.setItem('dataLoggerData', JSON.stringify(data));
         }
@@ -1013,6 +1016,15 @@
                 }
                 if (data.sessionCounter) {
                     sessionCounter = data.sessionCounter;
+                }
+                if (data.sessionStartTime) {
+                    sessionStartTime = data.sessionStartTime;
+                }
+                if (data.sessionEndTime) {
+                    sessionEndTime = data.sessionEndTime;
+                }
+                if (data.isSessionActive !== undefined) {
+                    isSessionActive = data.isSessionActive;
                 }
             }
         }
